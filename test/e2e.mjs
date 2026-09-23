@@ -322,6 +322,13 @@ async function main() {
     const allText = files.filter((f) => typeof f.data === 'string').map((f) => f.data).join('\n');
     checks.push(['伪元素样式已输出（::before 规则存在）',
       allCss.some((f) => /::before\s*\{/.test(f.data))]);
+    // 滚动条伪元素取不到 computed style，只能搬运原页 CSSOM 的规则原文
+    checks.push(['滚动条伪元素规则已搬运（::-webkit-scrollbar）',
+      /::-webkit-scrollbar/.test(allText)]);
+    // UA 样式表给 button 的 appearance:auto 会盖掉作者样式；
+    // 原页重置成 none 恰好等于初始值，必须单独采集，否则按钮退回原生外观
+    checks.push(['表单控件已显式重置 appearance（否则退回原生外观）',
+      /appearance:\s*none/.test(allText)]);
 
     // 以下两项依赖 fixture 里专门构造的用例（--accent 变量、.icon-pick 图标字体）。
     // 用任意网址跑测试时它们本就不存在，不应因此误报失败。
