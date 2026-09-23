@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <header class="head">
+      <h1>Page Snapper</h1>
+      <p class="sub">把当前页面提取成 AI 可读的素材包</p>
+    </header>
+
+    <section class="options">
+      <label class="opt">
+        <input type="checkbox" id="opt-scroll" checked>
+        <span>先滚动全页触发懒加载</span>
+      </label>
+      <label class="opt">
+        <input type="checkbox" id="opt-full" checked>
+        <span>包含完整还原页 <code>full/</code></span>
+      </label>
+    </section>
+
+    <button id="run" class="primary">提取当前页素材包</button>
+
+    <section id="status" class="status" hidden>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <p id="status-text" class="status-text">准备中…</p>
+      <p id="status-detail" class="detail"></p>
+    </section>
+
+    <section id="summary" class="summary" hidden></section>
+
+    <p id="hint" class="hint">页面较大时约需 10–30 秒，期间请勿关闭本弹窗</p>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

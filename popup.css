@@ -1,0 +1,185 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 340px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  color: #1f2937;
+  background: #ffffff;
+}
+
+.app {
+  padding: 16px;
+}
+
+.head h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.head .sub {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.opt input {
+  margin: 0;
+  accent-color: #2563eb;
+}
+
+.opt code {
+  padding: 1px 4px;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.primary {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.primary:disabled {
+  background: #93a7d4;
+  cursor: default;
+}
+
+.status {
+  margin-top: 14px;
+}
+
+.bar {
+  height: 4px;
+  overflow: hidden;
+  background: #eef0f3;
+  border-radius: 999px;
+}
+
+#bar-fill {
+  width: 4%;
+  height: 100%;
+  background: #2563eb;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+#bar-fill.error {
+  background: #dc2626;
+}
+
+.status-text {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.detail {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.summary {
+  margin-top: 14px;
+  padding: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+}
+
+.summary h2 {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #15803d;
+}
+
+.summary dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 11.5px;
+}
+
+.summary dt {
+  color: #4b5563;
+}
+
+.summary dd {
+  margin: 0;
+  color: #111827;
+  word-break: break-all;
+}
+
+.summary dd.warn {
+  color: #b45309;
+}
+
+.summary details {
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+.summary summary {
+  cursor: pointer;
+  color: #4b5563;
+}
+
+.summary ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.5;
+}

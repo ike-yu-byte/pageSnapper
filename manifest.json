@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Page Snapper — 网页素材包提取器",
+  "version": "1.0.0",
+  "description": "把当前正在浏览的网页提取成适合 AI 复刻的素材包：分区块 HTML/CSS、设计令牌、语义化命名的原始图片。",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "offscreen",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "提取当前页面素材包"
+  }
+}
