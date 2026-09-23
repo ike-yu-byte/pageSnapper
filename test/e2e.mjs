@@ -316,6 +316,16 @@ async function main() {
       const idx = files.find((f) => f.path === 'index.html');
       return !!idx && !/<img\b(?![^>]*\ssrc\s*=)[^>]*\sdata-src\s*=/i.test(idx.data);
     })()]);
+    // 伪元素样式：图标字体的 content、装饰元素都在 ::before / ::after 上，
+    // 早先采集了却没输出，导致图标整片消失。
+    const allCss = files.filter((f) => typeof f.data === 'string' && f.path.endsWith('.css'));
+    const allText = files.filter((f) => typeof f.data === 'string').map((f) => f.data).join('\n');
+    checks.push(['伪元素样式已输出（::before 规则存在）',
+      allCss.some((f) => /::before\s*\{/.test(f.data))]);
+    checks.push(['CSS 自定义属性（--accent）已输出',
+      /--accent\s*:/.test(allText)]);
+    checks.push(['图标字体 content 已转义为 \\XXXX 形式',
+      /content:\s*"\\[0-9a-f]{2,6}/i.test(allText)]);
     checks.push(['CSS 中不含无效声明 "x:;"',
       !files.some((f) => typeof f.data === 'string' && /[a-z-]+:\s*;/.test(f.data))]);
 
