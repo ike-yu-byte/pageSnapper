@@ -322,15 +322,32 @@ async function main() {
     const allText = files.filter((f) => typeof f.data === 'string').map((f) => f.data).join('\n');
     checks.push(['伪元素样式已输出（::before 规则存在）',
       allCss.some((f) => /::before\s*\{/.test(f.data))]);
-    checks.push(['CSS 自定义属性（--accent）已输出',
-      /--accent\s*:/.test(allText)]);
-    checks.push(['图标字体 content 已转义为 \\XXXX 形式',
-      /content:\s*"\\[0-9a-f]{2,6}/i.test(allText)]);
+
+    // 以下两项依赖 fixture 里专门构造的用例（--accent 变量、.icon-pick 图标字体）。
+    // 用任意网址跑测试时它们本就不存在，不应因此误报失败。
+    // fixture 通过 file:// 加载，真实网址则是 http(s)://
+    if (String(data.meta.url).indexOf('file://') === 0) {
+      checks.push(['CSS 自定义属性（--accent）已输出',
+        /--accent\s*:/.test(allText)]);
+      checks.push(['图标字体 content 已转义为 \\XXXX 形式',
+        /content:\s*"\\[0-9a-f]{2,6}/i.test(allText)]);
+    }
     // 原页隐藏的元素会被过滤掉、不生成规则，但 HTML 里仍在。
     // 不显式隐藏它们就会以浏览器默认样式显示，导致整页散乱。
     checks.push(['采集阶段记录了原页的隐藏元素', (data.hidden || []).length > 0]);
     checks.push(['隐藏元素已显式隐藏（不会以默认样式显示）',
       /原页面中不可见的元素/.test(allText)]);
+    // 外部 css / js / 图标没有下载进包，留着只会 404；下载了也是压缩丑化的代码，AI 无法拆分
+    checks.push(['index.html 只保留 style.css 这一个 link', (() => {
+      const idx = files.find((f) => f.path === 'index.html');
+      if (!idx) return false;
+      const links = idx.data.match(/<link\b/gi) || [];
+      return links.length === 1 && /href=["']style\.css["']/i.test(idx.data);
+    })()]);
+    checks.push(['index.html 不含内联 <style>（样式统一来自 style.css）', (() => {
+      const idx = files.find((f) => f.path === 'index.html');
+      return !!idx && !/<style\b/i.test(idx.data);
+    })()]);
     checks.push(['CSS 中不含无效声明 "x:;"',
       !files.some((f) => typeof f.data === 'string' && /[a-z-]+:\s*;/.test(f.data))]);
 
