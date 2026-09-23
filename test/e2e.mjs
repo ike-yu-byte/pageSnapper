@@ -298,8 +298,24 @@ async function main() {
     checks.push(['HTML 中图片引用已改写为本地路径', files
       .filter((f) => f.path.startsWith('sections/') && f.path.endsWith('.html'))
       .some((f) => f.data.includes('../images/'))]);
-    checks.push(['full/index.html 已生成',
-      files.some((f) => f.path === 'full/index.html')]);
+    checks.push(['根目录 index.html 已生成（解压即可预览）',
+      files.some((f) => f.path === 'index.html')]);
+    checks.push(['根目录 style.css 已生成',
+      files.some((f) => f.path === 'style.css')]);
+    checks.push(['index.html 图片引用指向同级 images/', (() => {
+      const idx = files.find((f) => f.path === 'index.html');
+      if (!idx) return false;
+      return /src=["']images\//.test(idx.data) || /url\(["']?images\//.test(idx.data);
+    })()]);
+    // 早先的 bug：fileName 取错对象，引用被拼成 images/undefined。
+    // 只判断"包含 images/" 抓不到它，必须显式排除。
+    checks.push(['包内无 images/undefined 这类坏引用',
+      !files.some((f) => typeof f.data === 'string' && /images\/undefined/.test(f.data))]);
+    // 原页靠 JS 把 data-src 赋给 src；静态快照没有 JS，必须补 src 才能显示
+    checks.push(['懒加载图片已补上 src（预览不缺图）', (() => {
+      const idx = files.find((f) => f.path === 'index.html');
+      return !!idx && !/<img\b(?![^>]*\ssrc\s*=)[^>]*\sdata-src\s*=/i.test(idx.data);
+    })()]);
     checks.push(['CSS 中不含无效声明 "x:;"',
       !files.some((f) => typeof f.data === 'string' && /[a-z-]+:\s*;/.test(f.data))]);
 
