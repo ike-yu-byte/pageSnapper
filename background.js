@@ -67,7 +67,7 @@ async function run(port, options) {
   }
 
   progress('inject', '注入采集脚本…');
-  await chrome.scripting.executeScript({
+  await chrome.scripting.executeScript({ // 1. 注入采集脚本
     target: { tabId: tab.id },
     files: ['lib/collector.js']
   });
@@ -76,7 +76,7 @@ async function run(port, options) {
   const startedAt = Date.now();
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: (opts) => window.__PAGE_SNAPPER__.collect(opts),
+    func: (opts) => window.__PAGE_SNAPPER__.collect(opts), // 2. 调用注入脚本里面的window.__PAGE_SNAPPER__的collect方法
     args: [options || {}]
   });
 
