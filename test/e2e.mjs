@@ -326,6 +326,11 @@ async function main() {
       /--accent\s*:/.test(allText)]);
     checks.push(['图标字体 content 已转义为 \\XXXX 形式',
       /content:\s*"\\[0-9a-f]{2,6}/i.test(allText)]);
+    // 原页隐藏的元素会被过滤掉、不生成规则，但 HTML 里仍在。
+    // 不显式隐藏它们就会以浏览器默认样式显示，导致整页散乱。
+    checks.push(['采集阶段记录了原页的隐藏元素', (data.hidden || []).length > 0]);
+    checks.push(['隐藏元素已显式隐藏（不会以默认样式显示）',
+      /原页面中不可见的元素/.test(allText)]);
     checks.push(['CSS 中不含无效声明 "x:;"',
       !files.some((f) => typeof f.data === 'string' && /[a-z-]+:\s*;/.test(f.data))]);
 
