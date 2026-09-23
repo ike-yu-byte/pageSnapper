@@ -135,6 +135,14 @@ node test/e2e.mjs "https://example.com/"
 
 测试会启动独立的 headless Chrome（不碰你正在用的浏览器），完整走一遍采集 → 抓资源 → 打包，输出 10 项断言结果，产物落在 `test/output/`。
 
+另有一个真机测试，会把扩展真正装进浏览器验证运行时行为：
+
+```bash
+node test/extension-e2e.mjs
+```
+
+它会把扩展真正装进 headless Chrome，验证 11 项只有运行时才暴露的行为：offscreen document 里 `chrome.downloads` 不可用（这正是"下载必须回到 SW 执行"的原因）、offscreen 创建的 blob URL 能否跨上下文交给 `downloads` 完成下载、Service Worker 能否正常注册，以及完整的 `popup → SW → offscreen → SW 下载` 链路能否跑通并真正产出 ZIP 文件。
+
 ---
 
 ## 五、已知限制
@@ -147,6 +155,18 @@ node test/e2e.mjs "https://example.com/"
 - **不还原交互逻辑**：产出的是静态快照，页面里的 `<script>` 已被移除。
 
 ## 六、常见问题
+
+**Q：出错了，但不知道去哪看日志？**
+
+扩展各部分的日志不在一起，需要分别打开：
+
+| 组件 | 打开方式 |
+|---|---|
+| Service Worker（`background.js`） | `chrome://extensions` → 本扩展卡片 → 点 **Service Worker** 打开检查视图 |
+| offscreen document | 同一区域会列出 `offscreen.html` 的检查入口 |
+| popup 界面 | 在工具栏扩展图标上**右键 → 检查弹出内容** |
+
+弹窗里显示的失败信息同时会把完整堆栈打印到 popup 与 Service Worker 的控制台，便于定位。
 
 **Q：进度条走到"下载图片与字体"卡住或失败项很多？**
 看 ZIP 里 `images.json` 的 `error` 字段和 `page-meta.json` 的 `warnings`。常见原因是图片服务器有防盗链（校验 `Referer`）或需要鉴权 Cookie，这类资源扩展抓不到。数量很少时通常不影响复刻。
@@ -192,7 +212,8 @@ test/
   └── e2e.mjs       端到端测试
 ```
 
-两处值得留意的实现决策：
+三处值得留意的实现决策（都是被平台限制逼出来的）：
 
 - **ZIP 打包器是手写的**：MV3 禁止加载远程代码，用不了 CDN 上的 JSZip；而图片本身已是压缩格式，store 模式（不再 deflate）足够，还能避免引入依赖。
 - **打包放在 offscreen 而非 Service Worker**：MV3 的 SW 里 `URL.createObjectURL` 已被移除，无法把内存中的 ZIP 字节变成可交给 `downloads` API 的 blob URL。
+- **下载动作必须回到 Service Worker**：offscreen document 虽然继承了扩展权限，但**扩展 API 访问被大幅裁剪**——`chrome.downloads` 在它里面是 `undefined`（`chrome.runtime`、`URL.createObjectURL` 可用）。因此分工是：offscreen 生成 blob URL，SW 拿它调 `chrome.downloads.download`。blob URL 是 origin 级的，扩展各上下文同源，可以跨上下文使用。

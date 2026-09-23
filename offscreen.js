@@ -13,6 +13,10 @@ import { ZipWriter } from './lib/zip.js';
 const FETCH_CONCURRENCY = 6;
 const FETCH_TIMEOUT_MS = 25000;
 
+// 最近一次生成的 blob URL。下次打包前释放，避免内存泄漏；
+// 下载期间必须保持有效，所以不做即时 revoke。
+let lastBlobUrl = '';
+
 function report(stage, detail, extra) {
   try {
     chrome.runtime.sendMessage(Object.assign({ type: 'progress', stage, detail }, extra || {})).catch(() => {});
@@ -180,25 +184,21 @@ async function buildAndDownload(data) {
   for (const f of files) zip.add(f.path, f.data);
   const bytes = zip.build();
 
+  // offscreen document 的扩展 API 被大幅裁剪，chrome.downloads 在这里是 undefined，
+  // 因此本页只负责把字节转成 blob URL，真正的下载由 Service Worker 执行。
+  // blob URL 是 origin 级的，offscreen 与 SW 同源，可以跨上下文使用。
+  if (lastBlobUrl) {
+    try { URL.revokeObjectURL(lastBlobUrl); } catch (e) { /* ignore */ }
+    lastBlobUrl = '';
+  }
   const blob = new Blob([bytes], { type: 'application/zip' });
-  const blobUrl = URL.createObjectURL(blob);
+  lastBlobUrl = URL.createObjectURL(blob);
   const fileName = suggestPackageName(data.meta) + '.zip';
-
-  const downloadId = await chrome.downloads.download({
-    url: blobUrl,
-    filename: fileName,
-    saveAs: false
-  });
-
-  // 下载已交给浏览器，稍后释放 blob URL 以回收内存
-  setTimeout(() => {
-    try { URL.revokeObjectURL(blobUrl); } catch (e) { /* ignore */ }
-  }, 120000);
 
   return {
     ok: true,
     fileName,
-    downloadId,
+    blobUrl: lastBlobUrl,
     fileCount: files.length,
     bytes: bytes.length,
     images: imgStat,
@@ -209,12 +209,26 @@ async function buildAndDownload(data) {
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // 便于排查"消息是否送达 / 处理卡在哪一步"（可在扩展详情页的检查视图里查看）
+  self.__OFFSCREEN_MSG_COUNT__ = (self.__OFFSCREEN_MSG_COUNT__ || 0) + 1;
+  self.__OFFSCREEN_LAST_MSG__ = msg && msg.type ? msg.type : '(unknown)';
+  self.__OFFSCREEN_STAGE__ = 'received:' + self.__OFFSCREEN_LAST_MSG__;
+
   if (!msg || msg.target !== 'offscreen') return false;
+
   if (msg.type === 'build-package') {
     buildAndDownload(msg.data)
-      .then((result) => sendResponse(result))
-      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+      .then((result) => {
+        self.__OFFSCREEN_STAGE__ = 'responded:ok';
+        sendResponse(result);
+      })
+      .catch((e) => {
+        self.__OFFSCREEN_ERR__ = String((e && e.stack) || e);
+        self.__OFFSCREEN_STAGE__ = 'responded:error';
+        sendResponse({ ok: false, error: String((e && e.message) || e) });
+      });
     return true; // 异步响应
   }
+
   return false;
 });

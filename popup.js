@@ -15,6 +15,7 @@ const STAGE_LABEL = {
   'fonts-progress': '下载字体',
   pack: '生成包内文件',
   zip: '打包 ZIP',
+  save: '保存 ZIP',
   done: '完成'
 };
 
@@ -112,6 +113,7 @@ runBtn.addEventListener('click', () => {
       barFill.classList.add('error');
       setStatus('失败', msg.message);
       setBusy(false);
+      if (msg.stack) console.error('[Page Snapper] ' + msg.stack);
     }
   });
 
@@ -119,13 +121,28 @@ runBtn.addEventListener('click', () => {
     port = null;
   });
 
-  port.postMessage({
-    type: 'start',
-    options: {
+  // 在点击的瞬间确定目标标签页再传给 background。
+  // 不依赖 background 侧自己查"当前活动标签页" —— 采集期间活动标签页可能变化，
+  // 那样会采到错误的页面。
+  const buildOptions = (tabId) => {
+    const options = {
       scrollFirst: document.getElementById('opt-scroll').checked,
       includeFullHtml: document.getElementById('opt-full').checked
-    }
-  });
+    };
+    if (tabId != null) options.tabId = tabId;
+    return options;
+  };
+
+  chrome.tabs.query({ active: true, currentWindow: true })
+    .then((tabs) => {
+      if (!port) return;
+      const activeTab = tabs && tabs[0];
+      port.postMessage({ type: 'start', options: buildOptions(activeTab ? activeTab.id : null) });
+    })
+    .catch(() => {
+      if (!port) return;
+      port.postMessage({ type: 'start', options: buildOptions(null) });
+    });
 });
 
 // offscreen 打包阶段的进度广播

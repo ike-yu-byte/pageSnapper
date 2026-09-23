@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Chrome MV3 扩展：把当前正在浏览的网页提取成适合 AI 复刻的素材包（分区块 HTML/CSS、设计令牌、语义化命名的图片）。仅用于本地 Node 测试加载 ESM，Chrome 扩展会忽略本文件。",
   "scripts": {
-    "test": "node test/e2e.mjs"
+    "test": "node test/e2e.mjs",
+    "test:ext": "node test/extension-e2e.mjs"
   }
 }
