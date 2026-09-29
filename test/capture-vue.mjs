@@ -17,7 +17,11 @@ const COLLECTOR = fs.readFileSync(path.join(ROOT, 'lib', 'collector.js'), 'utf8'
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const CDP_PORT = parseInt(process.env.CDP_PORT || '9455', 10);
 const TARGET_URL = process.env.TARGET_URL || 'https://cn.vuejs.org/';
-const VIEWPORT_W = 1440, VIEWPORT_H = 900;
+const VIEWPORT_W = parseInt(process.env.VIEWPORT_W || '1440', 10);
+const VIEWPORT_H = parseInt(process.env.VIEWPORT_H || '900', 10);
+const MOBILE = process.env.MOBILE === '1';
+const UA = process.env.USER_AGENT || '';
+const WAIT_MS = parseInt(process.env.WAIT_MS || '8000', 10);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -91,7 +95,8 @@ async function main() {
     await cdp.send('Page.enable', {}, sessionId);
     await cdp.send('Runtime.enable', {}, sessionId);
     await cdp.send('Emulation.setDeviceMetricsOverride',
-      { width: VIEWPORT_W, height: VIEWPORT_H, deviceScaleFactor: 1, mobile: false }, sessionId);
+      { width: VIEWPORT_W, height: VIEWPORT_H, deviceScaleFactor: 1, mobile: MOBILE }, sessionId);
+    if (UA) await cdp.send('Emulation.setUserAgentOverride', { userAgent: UA }, sessionId);
 
     console.log('[capture] 打开 ' + TARGET_URL);
     await cdp.send('Page.navigate', { url: TARGET_URL }, sessionId);
@@ -102,7 +107,7 @@ async function main() {
       await sleep(300);
     }
     // SPA 渲染 + 字体/图片加载
-    await sleep(8000);
+    await sleep(WAIT_MS);
 
     console.log('[capture] 注入 collector.js …');
     await cdp.evaluate(sessionId, COLLECTOR, 30000);

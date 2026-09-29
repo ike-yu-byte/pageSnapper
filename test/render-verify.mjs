@@ -24,7 +24,9 @@ const COLLECTOR = fs.readFileSync(path.join(ROOT, 'lib', 'collector.js'), 'utf8'
 
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const CDP_PORT = parseInt(process.env.CDP_PORT || '9466', 10);
-const VIEWPORT_W = 1440, VIEWPORT_H = 900;
+const VIEWPORT_W = parseInt(process.env.VIEWPORT_W || '1440', 10);
+const VIEWPORT_H = parseInt(process.env.VIEWPORT_H || '900', 10);
+const MOBILE = process.env.MOBILE === '1';
 const OFFSET_THRESHOLD = 40;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -95,7 +97,7 @@ async function main() {
     const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
     await cdp.send('Page.enable', {}, sessionId);
     await cdp.send('Runtime.enable', {}, sessionId);
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width: VIEWPORT_W, height: VIEWPORT_H, deviceScaleFactor: 1, mobile: false }, sessionId);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: VIEWPORT_W, height: VIEWPORT_H, deviceScaleFactor: 1, mobile: MOBILE }, sessionId);
 
     const fileUrl = 'file://' + path.join(RENDER, 'index.html').replace(/\\/g, '/');
     console.log('[verify] 打开 ' + fileUrl);
